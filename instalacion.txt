@@ -1,0 +1,7 @@
+Instalar dependencias:
+pip install -r requirements.txt
+
+
+Actualizar requirements de forma automatica:
+pip install pipreqs 			->(sino está instalado)
+pipreqs reglamento/ --force 	->("reglamento/" es el nombre de la carpeta)
