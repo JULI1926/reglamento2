@@ -151,12 +151,7 @@ def agregar_filas(tipo, cantidad, frame, start_row):
 
 def generar_tabla():
     try:
-        for widget in admin_frame.winfo_children():
-            widget.destroy()
-        for widget in oper_frame.winfo_children():
-            widget.destroy()
-
-        entry_widgets.clear()
+        limpiar_tablas()
 
         row = 1
         font_settings = ("Helvetica", 14)
@@ -246,15 +241,26 @@ def aceptar():
             operativo_cb.config(state=tk.DISABLED)
             administrativo_cb.config(state=tk.DISABLED)
         else:
-            for widget in admin_frame.winfo_children():
-                widget.destroy()
-            for widget in oper_frame.winfo_children():
-                widget.destroy()
-            entry_widgets.clear()
+            limpiar_tablas()
             operativo_cb.config(state=tk.NORMAL)
             administrativo_cb.config(state=tk.NORMAL)
     except Exception as e:
         print(f"Error en aceptar: {e}")
+
+def modificar():
+    try:
+        operativo_cb.config(state=tk.NORMAL)
+        administrativo_cb.config(state=tk.NORMAL)
+        limpiar_tablas()
+    except Exception as e:
+        print(f"Error en modificar: {e}")
+
+def limpiar_tablas():
+    for widget in admin_frame.winfo_children():
+        widget.destroy()
+    for widget in oper_frame.winfo_children():
+        widget.destroy()
+    entry_widgets.clear()
 
 def toggle_operativo_cb():
     operativo_cb.config(state=tk.NORMAL if operativo_var.get() else tk.DISABLED)
@@ -402,6 +408,10 @@ oper_frame.grid(row=1, column=0, padx=5, pady=5)
 # Botón para aceptar
 btn_aceptar = tk.Button(frame_horarios, text="Aceptar", command=aceptar, bg=bg_color, font=("Helvetica", 14))
 btn_aceptar.grid(row=3, column=0, columnspan=2, pady=10)
+
+# Botón para modificar
+btn_modificar = tk.Button(frame_horarios, text="Modificar", command=modificar, bg=bg_color, font=("Helvetica", 14))
+btn_modificar.grid(row=3, column=2, columnspan=2, pady=10)
 
 # Configurar la fuente del menú desplegable
 ventana.option_add('*TCombobox*Listbox.font', font_style)
