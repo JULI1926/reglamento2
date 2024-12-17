@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from tkinter import filedialog, messagebox
 from docx import Document
 from docx.shared import Pt
 from xml.etree.ElementTree import Element as OxmlElement
@@ -9,6 +10,24 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from lxml import etree
 
+# Variable global para almacenar la ruta del archivo
+plantilla_path = None
+
+def cargar_documento():
+    global plantilla_path
+    try:
+        plantilla_path = filedialog.askopenfilename(
+            title="Seleccionar documento",
+            filetypes=(("Documentos de Word", "*.docx"), ("Todos los archivos", "*.*"))
+        )
+        if plantilla_path:
+            print(f"Documento cargado: {plantilla_path}")
+            messagebox.showinfo("Éxito", f"Documento cargado: {plantilla_path}")
+        else:
+            messagebox.showwarning("Cancelado", "No se seleccionó ningún documento.")
+    except Exception as e:
+        print(f"Error al cargar el documento: {e}")
+        messagebox.showerror("Error", f"Error al cargar el documento: {e}")
 
 def insertar_tabla(doc, paragraph, horarios):
     try:
@@ -52,30 +71,53 @@ def capturar_seleccionados(roles):
         print(f"Error al capturar sanciones: {e}")
         return []
 
-def reemplazar_datos_en_plantilla(datos):
+def reemplazar_datos_en_plantilla(datos, plantilla_path):
     try:
-        doc = Document('template.docx')
-        keys_to_uppercase = ['NOMBRE', 'MUNICIPIO', 'DEPARTAMENTO', 'REPRESENTANTE_LEGAL']  
+        # Cargar la plantilla
+        doc = Document(plantilla_path)
+        
+        # Claves que se deben convertir a mayúsculas
+        keys_to_uppercase = ['NOMBRE', 'MUNICIPIO', 'DEPARTAMENTO', 'REPRESENTANTE_LEGAL']
 
+        # Reemplazar marcadores en los párrafos
         for p in doc.paragraphs:
             for run in p.runs:
                 for key, value in datos.items():
-                    if key in keys_to_uppercase:
-                        value = value.upper()  # Convertir a mayúsculas
+                    # Convertir a mayúsculas si corresponde
+                    if key in keys_to_uppercase and isinstance(value, str):
+                        value = value.upper()
+                    
+                    # Reemplazar marcador si lo encuentra
                     if f"|{key}|" in run.text:
-                        print(f"Encontrado marcador |{key}| en el párrafo: {run.text}")
+                        print(f"Reemplazando marcador |{key}| con valor: {value}")
                         run.text = run.text.replace(f"|{key}|", value)
                         if key == 'NOMBRE':
-                            run.bold = True
+                            run.bold = True  # Hacer el nombre en negrita
+
+        # Revisar tablas por marcadores
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for key, value in datos.items():
+                        if f"|{key}|" in cell.text:
+                            print(f"Reemplazando marcador |{key}| en tabla con valor: {value}")
+                            cell.text = cell.text.replace(f"|{key}|", value)
+
+        # Manejar el marcador |HORARIO| e insertar la tabla
         for p in doc.paragraphs:
             if "|HORARIO|" in p.text:
-                p.text = p.text.replace('|HORARIO|', "")
-                insertar_tabla(doc, p, datos['horarios'])
+                p.text = p.text.replace('|HORARIO|', "")  # Eliminar el marcador del texto
+                insertar_tabla(doc, p, datos['horarios'])  # Insertar la tabla de horarios
                 break
+
+        # Guardar el documento generado
         doc.save('documento_completado.docx')
         print("Documento generado correctamente")
+    
     except Exception as e:
         print(f"Error al reemplazar datos en plantilla: {e}")
+
+
 
 def agregar_fila(tipo, row, frame):
     try:
@@ -179,10 +221,14 @@ def on_submit():
             print("imponer_sanciones_vars:", imponer_sanciones_vars)
             print("IMPONER_SANCIONES:", datos['IMPONER_SANCIONES'])
 
-            reemplazar_datos_en_plantilla(datos)
-            messagebox.showinfo("Éxito", "El documento se ha generado correctamente.")
+            if plantilla_path:
+                reemplazar_datos_en_plantilla(datos, plantilla_path)
+                messagebox.showinfo("Éxito", "El documento se ha generado correctamente.")
+            else:
+                messagebox.showwarning("Advertencia", "Primero debe cargar un documento.")
         except Exception as e:
             print(f"Error en on_submit: {e}")
+            messagebox.showerror("Error", f"Error en on_submit: {e}")
 
 def aceptar():
     try:
@@ -425,10 +471,13 @@ representante_legal_entry.grid(row=10, column=1, padx=10, pady=10, sticky="ew")
 frame_botones = tk.Frame(frame_contenido, bg=bg_color)
 frame_botones.grid(row=11, column=0, padx=10, pady=10, sticky="ew")
 
+# Crear un botón para cargar el documento
+btn_cargar = tk.Button(frame_botones, text="Cargar Documento", command=cargar_documento)
+btn_cargar.grid(row=0, column=0, padx=10, pady=10)
 
 # Botón para enviar el formulario
 submit_button = tk.Button(frame_botones, text="Generar Documento", command=on_submit)
-submit_button.grid(row=0, column=0, pady=10, padx=10)
+submit_button.grid(row=0, column=1, padx=10, pady=10)
 
 # Aplicar estilos al botón
 submit_button.config(bg="blue", fg="white", font=("Helvetica", 12, "bold"))
