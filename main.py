@@ -84,6 +84,10 @@ def reemplazar_datos_en_plantilla(datos, plantilla_path):
         # Claves que se deben convertir a mayúsculas
         keys_to_uppercase = ['NOMBRE', 'MUNICIPIO', 'DEPARTAMENTO', 'REPRESENTANTE_LEGAL']
 
+        # Conjuntos para rastrear variables encontradas y reemplazadas
+        variables_encontradas = set()
+        variables_reemplazadas = set()
+
         # Reemplazar marcadores en los párrafos
         for p in doc.paragraphs:
             for run in p.runs:
@@ -94,8 +98,9 @@ def reemplazar_datos_en_plantilla(datos, plantilla_path):
                     
                     # Reemplazar marcador si lo encuentra
                     if f"|{key}|" in run.text:
-                        print(f"Reemplazando marcador |{key}| con valor: {value}")
+                        variables_encontradas.add(key)
                         run.text = run.text.replace(f"|{key}|", value)
+                        variables_reemplazadas.add(key)
                         if key == 'NOMBRE':
                             run.bold = True  # Hacer el nombre en negrita
 
@@ -105,8 +110,9 @@ def reemplazar_datos_en_plantilla(datos, plantilla_path):
                 for cell in row.cells:
                     for key, value in datos.items():
                         if f"|{key}|" in cell.text:
-                            print(f"Reemplazando marcador |{key}| en tabla con valor: {value}")
+                            variables_encontradas.add(key)
                             cell.text = cell.text.replace(f"|{key}|", value)
+                            variables_reemplazadas.add(key)
 
         # Manejar el marcador |HORARIO| e insertar la tabla
         for p in doc.paragraphs:
@@ -115,15 +121,25 @@ def reemplazar_datos_en_plantilla(datos, plantilla_path):
                 insertar_tabla(doc, p, datos['horarios'])  # Insertar la tabla de horarios
                 break
 
-         # Guardar el documento generado en el escritorio
+        # Guardar el documento generado en el escritorio
         ruta_escritorio = obtener_ruta_escritorio()
         nombre_archivo = f"Reglamento Interno de TRABAJO '{datos['NOMBRE'].upper()}'.docx"
         doc.save(os.path.join(ruta_escritorio, nombre_archivo))
-        print("Documento generado correctamente en el escritorio")
+        print(f"Documento generado correctamente en el escritorio como '{nombre_archivo}'")
+
+        # Imprimir resultados de variables encontradas y reemplazadas
+        for key in datos.keys():
+            if key in variables_encontradas:
+                print(f"Variable '{key}' encontrada.")
+            else:
+                print(f"Variable '{key}' no encontrada.")
+            if key in variables_reemplazadas:
+                print(f"Variable '{key}' reemplazada.")
+            else:
+                print(f"Variable '{key}' no reemplazada.")
     
     except Exception as e:
         print(f"Error al reemplazar datos en plantilla: {e}")
-
 
 
 def agregar_fila(tipo, row, frame):
