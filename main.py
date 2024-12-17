@@ -117,7 +117,8 @@ def reemplazar_datos_en_plantilla(datos, plantilla_path):
 
          # Guardar el documento generado en el escritorio
         ruta_escritorio = obtener_ruta_escritorio()
-        doc.save(os.path.join(ruta_escritorio, 'documento_completado.docx'))
+        nombre_archivo = f"Reglamento Interno de TRABAJO '{datos['NOMBRE'].upper()}'.docx"
+        doc.save(os.path.join(ruta_escritorio, nombre_archivo))
         print("Documento generado correctamente en el escritorio")
     
     except Exception as e:
