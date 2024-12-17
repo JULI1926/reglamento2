@@ -1,4 +1,5 @@
 import tkinter as tk
+import os
 from tkinter import ttk, messagebox
 from tkinter import filedialog, messagebox
 from docx import Document
@@ -12,6 +13,10 @@ from lxml import etree
 
 # Variable global para almacenar la ruta del archivo
 plantilla_path = None
+
+# Función para obtener la ruta del escritorio
+def obtener_ruta_escritorio():
+    return os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
 
 def cargar_documento():
     global plantilla_path
@@ -110,9 +115,10 @@ def reemplazar_datos_en_plantilla(datos, plantilla_path):
                 insertar_tabla(doc, p, datos['horarios'])  # Insertar la tabla de horarios
                 break
 
-        # Guardar el documento generado
-        doc.save('documento_completado.docx')
-        print("Documento generado correctamente")
+         # Guardar el documento generado en el escritorio
+        ruta_escritorio = obtener_ruta_escritorio()
+        doc.save(os.path.join(ruta_escritorio, 'documento_completado.docx'))
+        print("Documento generado correctamente en el escritorio")
     
     except Exception as e:
         print(f"Error al reemplazar datos en plantilla: {e}")
@@ -223,7 +229,7 @@ def on_submit():
 
             if plantilla_path:
                 reemplazar_datos_en_plantilla(datos, plantilla_path)
-                messagebox.showinfo("Éxito", "El documento se ha generado correctamente.")
+                messagebox.showinfo("Éxito", "El documento se ha generado correctamente en el escritorio.")
             else:
                 messagebox.showwarning("Advertencia", "Primero debe cargar un documento.")
         except Exception as e:

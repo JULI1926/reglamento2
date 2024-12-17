@@ -1,5 +1,6 @@
 .venv/
 build/
 dist/
-
+documento_completado.docx/
+main.spec/
 
